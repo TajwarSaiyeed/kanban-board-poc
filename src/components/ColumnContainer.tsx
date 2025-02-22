@@ -1,0 +1,65 @@
+import TrashIcon from "../icons/trash-icon";
+import { Column, Id } from "../types";
+
+interface ColumnContainerProps {
+  column: Column;
+  deleteColumn: (id: Id) => void;
+}
+
+const ColumnContainer = ({ column, deleteColumn }: ColumnContainerProps) => {
+  return (
+    <div className="bg-columnBackgroundColor w-[350px] h-[500px] max-h-[500px]rounded-lg flex flex-col">
+      {/* column title*/}
+      <div
+        className="
+        bg-mainBackgroundColor
+        text-md
+        h-[60px]
+        cursor-grab
+        rounded-lg
+        rounded-b-none
+        p-3
+        font-bold
+        border-columnBackgroundColor
+        border-4
+        flex justify-between items-center
+      "
+      >
+        <div className="flex items-center gap-2">
+          <div
+            className="
+          flex justify-center items-center
+          bg-columnBackgroundColor
+          px-2 py-1 text-sm rounded-full
+         "
+          >
+            0
+          </div>
+          {column.title}
+        </div>
+        <button
+          onClick={() => deleteColumn(column.id)}
+          className="
+            stroke-gray-500
+            hover:stroke-white
+            hover:bg-columnBackgroundColor
+            rounded
+            px-1 py-2
+            cursor-pointer
+          "
+        >
+          <TrashIcon />
+        </button>
+      </div>
+
+      {/* column tasks container */}
+
+      <div className="flex flex-grow">Content</div>
+
+      {/* column footer */}
+      <div>footer</div>
+    </div>
+  );
+};
+
+export default ColumnContainer;
