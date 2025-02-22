@@ -1,10 +1,24 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import PlusIcon from "../icons/plus-icon";
 import { Column, Id } from "../types";
 import ColumnContainer from "./ColumnContainer";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from "@dnd-kit/core";
+import { arrayMove, SortableContext } from "@dnd-kit/sortable";
+import { createPortal } from "react-dom";
 
 const KanbanBoard = () => {
   const [columns, setColumns] = useState<Column[]>([]);
+  const columnIds = useMemo(
+    () => columns.map((column) => column.id),
+    [columns]
+  );
+
+  const [activeColumn, setActiveColumn] = useState<Column | null>(null);
 
   const generateId = () => {
     return Math.floor(Math.random() * 1000000);
@@ -12,18 +26,42 @@ const KanbanBoard = () => {
 
   const createColumn = () => {
     const newColumn: Column = {
-      id: generateId().toString(),
+      id: generateId(),
       title: `Column ${columns.length + 1}`,
     };
     setColumns([...columns, newColumn]);
   };
 
   const deleteColumn = (columnId: Id) => {
+    console.log("delete column", columnId);
+
     const filteredColumns = columns.filter((column) => column.id !== columnId);
     setColumns(filteredColumns);
   };
 
-  console.log(columns);
+  const onDragStart = (event: DragStartEvent) => {
+    if (event.active?.data?.current?.type === "Column") {
+      const column = event.active.data.current.column as Column;
+      setActiveColumn(column);
+      return;
+    }
+  };
+  const onDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    if (active.id !== over.id) {
+      const overIndex = columns.findIndex((column) => column.id === over.id);
+      const activeIndex = columns.findIndex(
+        (column) => column.id === active.id
+      );
+
+      setColumns((columns) => {
+        return arrayMove(columns, activeIndex, overIndex);
+      });
+    }
+  };
 
   return (
     <div
@@ -36,25 +74,28 @@ const KanbanBoard = () => {
         px-[40px]
       "
     >
-      <div className="m-auto flex gap-2">
-        <div
-          className="
+      <DndContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+        <div className="m-auto flex gap-2">
+          <div
+            className="
             flex
             gap-4
             rounded-lg
           "
-        >
-          {columns.map((column) => (
-            <ColumnContainer
-              key={column.id}
-              column={column}
-              deleteColumn={deleteColumn}
-            />
-          ))}
-        </div>
-        <button
-          onClick={createColumn}
-          className="
+          >
+            <SortableContext items={columnIds}>
+              {columns.map((column) => (
+                <ColumnContainer
+                  key={column.id}
+                  column={column}
+                  deleteColumn={deleteColumn}
+                />
+              ))}
+            </SortableContext>
+          </div>
+          <button
+            onClick={createColumn}
+            className="
                 h-[60px]
                 w-[350px]
                 min-w-[350px]
@@ -68,11 +109,24 @@ const KanbanBoard = () => {
                 hover:ring-2
                 flex gap-2
             "
-        >
-          <PlusIcon />
-          Add column
-        </button>
-      </div>
+          >
+            <PlusIcon />
+            Add column
+          </button>
+        </div>
+
+        {createPortal(
+          <DragOverlay>
+            {activeColumn && (
+              <ColumnContainer
+                column={activeColumn}
+                deleteColumn={deleteColumn}
+              />
+            )}
+          </DragOverlay>,
+          document.body
+        )}
+      </DndContext>
     </div>
   );
 };

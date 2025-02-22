@@ -1,5 +1,7 @@
+import { useSortable } from "@dnd-kit/sortable";
 import TrashIcon from "../icons/trash-icon";
 import { Column, Id } from "../types";
+import { CSS } from "@dnd-kit/utilities";
 
 interface ColumnContainerProps {
   column: Column;
@@ -7,8 +9,42 @@ interface ColumnContainerProps {
 }
 
 const ColumnContainer = ({ column, deleteColumn }: ColumnContainerProps) => {
+  const {
+    listeners,
+    attributes,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: column.id,
+    data: {
+      type: "Column",
+      column,
+    },
+  });
+
+  const style = {
+    transition,
+    transform: CSS.Transform.toString(transform),
+  };
+
+  if (isDragging) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="bg-columnBackgroundColor w-[350px] h-[500px] max-h-[500px]rounded-lg flex flex-col opacity-40 border-2 border-rose-500"
+      ></div>
+    );
+  }
+
   return (
-    <div className="bg-columnBackgroundColor w-[350px] h-[500px] max-h-[500px]rounded-lg flex flex-col">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-columnBackgroundColor w-[350px] h-[500px] max-h-[500px]rounded-lg flex flex-col"
+    >
       {/* column title*/}
       <div
         className="
@@ -24,6 +60,8 @@ const ColumnContainer = ({ column, deleteColumn }: ColumnContainerProps) => {
         border-4
         flex justify-between items-center
       "
+        {...attributes}
+        {...listeners}
       >
         <div className="flex items-center gap-2">
           <div
